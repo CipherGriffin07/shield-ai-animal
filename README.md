@@ -33,6 +33,13 @@ hashing and a distance/experience scoring model).
 - **Media:** Cloudinary (optional) or local disk
 - **PDF:** reportlab, generated on demand — no stored PDFs
 
+## Picture
+<img width="1908" height="1116" alt="image" src="https://github.com/user-attachments/assets/b19edf03-f84a-4600-9b8a-2f71a98d8229" />
+<img width="1915" height="1068" alt="image" src="https://github.com/user-attachments/assets/c353170d-22dc-4035-8cae-7fd9af4d998a" />
+<img width="1902" height="1116" alt="image" src="https://github.com/user-attachments/assets/95b1bb58-2a43-4ecf-8d0f-29659b457f7c" />
+<img width="1894" height="1120" alt="image" src="https://github.com/user-attachments/assets/f292bfa9-d5cd-4915-a1e2-965d8b3b65ed" />
+<img width="1919" height="1128" alt="image" src="https://github.com/user-attachments/assets/603b4991-8aea-4c8b-a0b5-6747433c4ae5" />
+
 ## Setup
 
 ```bash

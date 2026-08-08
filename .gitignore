@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Environment secrets
+.env
+
+# Database
+*.db
+*.sqlite3
+
+# Uploaded media
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# OS/editor
+.DS_Store
+.vscode/
+.idea/
+
+# Frontend build (once added)
+node_modules/
+dist/

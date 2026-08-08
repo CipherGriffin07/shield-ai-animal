@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — SHIELD AI</title>
+<link rel="stylesheet" href="/static/css/theme.css">
+<link rel="stylesheet" href="/static/css/app.css">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+
+<div class="dash-shell" id="dash-shell"></div>
+
+<script src="/static/js/api.js"></script>
+<script src="/static/js/dashboard.js"></script>
+<script>
+(async () => {
+  const user = await renderDashboardShell({ active: 'overview', title: 'Overview' });
+  if (!user) return;
+  const content = document.getElementById('dash-content');
+
+  content.innerHTML = `
+    <div class="stat-grid" id="stat-grid"></div>
+    <h2 class="section-title">Quick actions</h2>
+    <div class="listing-grid" style="grid-template-columns:repeat(4,1fr);">
+      <a class="card panel" href="/report" style="text-decoration:none;">
+        <h4 style="font-size:15px;">Report an animal</h4>
+        <p style="font-size:13px; color:var(--ink-soft); margin-top:6px;">Submit a new emergency case</p>
+      </a>
+      <a class="card panel" href="/lost-found" style="text-decoration:none;">
+        <h4 style="font-size:15px;">Lost & found</h4>
+        <p style="font-size:13px; color:var(--ink-soft); margin-top:6px;">Post or browse listings</p>
+      </a>
+      <a class="card panel" href="/adoption" style="text-decoration:none;">
+        <h4 style="font-size:15px;">Adoption</h4>
+        <p style="font-size:13px; color:var(--ink-soft); margin-top:6px;">Find a new companion</p>
+      </a>
+      <a class="card panel" href="/chatbot" style="text-decoration:none;">
+        <h4 style="font-size:15px;">Ask SHIELD</h4>
+        <p style="font-size:13px; color:var(--ink-soft); margin-top:6px;">Get first-aid guidance</p>
+      </a>
+    </div>
+
+    <h2 class="section-title">Your recent reports</h2>
+    <div class="card" id="reports-table"></div>
+  `;
+
+  try {
+    const allReports = await SHIELD_API.listReports();
+    renderStats(allReports);
+    renderReportsTable(allReports.slice(0, 8));
+  } catch (err) {
+    document.getElementById('reports-table').innerHTML = `<p style="padding:24px; color:var(--ink-soft);">Couldn't load reports right now.</p>`;
+  }
+
+  function renderStats(reports) {
+    const critical = reports.filter(r => r.severity === 'Critical').length;
+    const active = reports.filter(r => r.status !== 'Case Closed').length;
+    document.getElementById('stat-grid').innerHTML = `
+      <div class="stat-card card"><div class="label">Total reports</div><div class="value">${reports.length}</div></div>
+      <div class="stat-card card"><div class="label">Active rescues</div><div class="value">${active}</div></div>
+      <div class="stat-card card"><div class="label">Critical cases</div><div class="value">${critical}</div></div>
+      <div class="stat-card card"><div class="label">Your account</div><div class="value" style="font-size:16px; text-transform:capitalize;">${user.role}</div></div>
+    `;
+  }
+
+  function renderReportsTable(reports) {
+    const el = document.getElementById('reports-table');
+    if (!reports.length) {
+      el.innerHTML = `<div class="empty-state">No reports yet. <a href="/report" style="color:var(--forest); font-weight:600;">Submit your first one →</a></div>`;
+      return;
+    }
+    el.innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>ID</th><th>Animal</th><th>Severity</th><th>Status</th><th>Submitted</th></tr></thead>
+        <tbody>
+          ${reports.map(r => `
+            <tr style="cursor:pointer" onclick="window.location.href='/tracking?id=${r.display_id}'">
+              <td class="mono-stat">${r.display_id}</td>
+              <td>${r.animal_type}</td>
+              <td><span class="badge ${severityBadgeClass(r.severity)}">${r.severity}</span></td>
+              <td>${r.status}</td>
+              <td>${timeAgo(r.created_at)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+})();
+</script>
+
+</body>
+</html>

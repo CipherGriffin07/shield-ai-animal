@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create an account — SHIELD AI</title>
+<link rel="stylesheet" href="/static/css/theme.css">
+<link rel="stylesheet" href="/static/css/auth.css">
+</head>
+<body class="auth-body">
+
+<div class="auth-shell">
+  <div class="auth-visual glass-dark">
+    <a class="brand" href="/" style="color:white;">
+      <span class="brand-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5.5V11C4 16.5 7.4 20.9 12 22C16.6 20.9 20 16.5 20 11V5.5L12 2Z" fill="white" fill-opacity="0.95"/><path d="M9 12L11 14L15.5 9.5" stroke="#0E3320" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      SHIELD AI
+    </a>
+    <div class="auth-visual-body">
+      <h2 style="color:white; font-size: 30px;">Join the network that gets there first.</h2>
+      <p style="color:rgba(255,255,255,0.75); margin-top:14px; font-size:15px;">
+        Whether you're reporting, rescuing, or coordinating care — your account keeps every case connected.
+      </p>
+      <div class="auth-quote">
+        <p>"312 volunteers. 48 NGOs. One shared timeline per case."</p>
+        <span>— SHIELD AI network, this month</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-form-side">
+    <div class="auth-form-inner">
+      <a class="btn-ghost" href="/" style="font-size:13.5px;">← Back to home</a>
+      <h1 style="font-size: 30px; margin-top: 22px;">Create an account</h1>
+      <p class="lede" style="font-size:15px; margin-top:8px;">Already have one? <a href="/login" style="color:var(--forest); font-weight:600;">Log in</a></p>
+
+      <form id="signup-form" class="mt-32">
+        <span style="font-size:13.5px; font-weight:600; color:var(--ink);">I am a…</span>
+        <div class="role-select mt-8" id="role-select">
+          <div class="role-option selected" data-role="citizen">Citizen</div>
+          <div class="role-option" data-role="volunteer">Volunteer</div>
+          <div class="role-option" data-role="ngo">NGO</div>
+          <div class="role-option" data-role="veterinarian">Veterinarian</div>
+          <div class="role-option" data-role="admin">Admin</div>
+        </div>
+        <input type="hidden" name="role" value="citizen">
+
+        <label class="field mt-24">
+          <span>Full name</span>
+          <input type="text" name="full_name" required placeholder="Jane Doe" autocomplete="name">
+        </label>
+
+        <div class="form-row-2 mt-16">
+          <label class="field">
+            <span>Email</span>
+            <input type="email" name="email" required placeholder="you@example.com" autocomplete="email">
+          </label>
+          <label class="field">
+            <span>Phone</span>
+            <input type="tel" name="phone" required placeholder="9876543210" autocomplete="tel">
+          </label>
+        </div>
+
+        <label class="field mt-16">
+          <span>City</span>
+          <input type="text" name="city" placeholder="Kolkata">
+        </label>
+
+        <label class="field mt-16">
+          <span>Password</span>
+          <input type="password" name="password" required placeholder="At least 8 characters" autocomplete="new-password">
+          <span class="field-hint">Needs 1 uppercase letter and 1 number.</span>
+        </label>
+
+        <div id="form-error" class="form-error" hidden></div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg mt-24">Create account</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/api.js"></script>
+<script>
+  const roleSelect = document.getElementById('role-select');
+  const roleInput = document.querySelector('input[name="role"]');
+  roleSelect.addEventListener('click', (e) => {
+    const option = e.target.closest('.role-option');
+    if (!option) return;
+    roleSelect.querySelectorAll('.role-option').forEach(o => o.classList.remove('selected'));
+    option.classList.add('selected');
+    roleInput.value = option.dataset.role;
+  });
+
+  const form = document.getElementById('signup-form');
+  const errorBox = document.getElementById('form-error');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorBox.hidden = true;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating account…';
+
+    const data = Object.fromEntries(new FormData(form));
+    if (!data.city) delete data.city;
+
+    try {
+      const tokens = await SHIELD_API.signup(data);
+      SHIELD_API.setTokens(tokens);
+      const roleRoutes = {
+        citizen: '/dashboard', volunteer: '/volunteer', ngo: '/ngo',
+        veterinarian: '/ngo', admin: '/admin',
+      };
+      window.location.href = roleRoutes[tokens.role] || '/dashboard';
+    } catch (err) {
+      errorBox.textContent = err.message;
+      errorBox.hidden = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create account';
+    }
+  });
+</script>
+
+</body>
+</html>

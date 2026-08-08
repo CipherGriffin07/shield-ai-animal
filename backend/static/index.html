@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHIELD AI — Smart Help for Injured Everyday & Living Diversity</title>
+<meta name="description" content="Report an injured animal, get instant AI-assisted triage, and get a matched volunteer moving within minutes.">
+<link rel="stylesheet" href="/static/css/theme.css">
+<script src="/static/js/ui.js"></script>
+<style>
+  /* ---------- Hero ---------- */
+  .hero {
+    padding: 72px 0 40px;
+    background:
+      radial-gradient(1100px 520px at 82% -10%, rgba(44, 134, 87, 0.14), transparent 60%),
+      linear-gradient(180deg, var(--mint-wash) 0%, var(--paper) 78%);
+  }
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 56px;
+    align-items: center;
+  }
+  .hero h1 {
+    font-size: 58px;
+    margin-top: 20px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--forest);
+    position: relative;
+  }
+  .hero-cta { display: flex; gap: 14px; margin-top: 36px; flex-wrap: wrap; }
+  .hero-trust {
+    display: flex;
+    gap: 34px;
+    margin-top: 48px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .hero-trust .num { font-size: 26px; font-weight: 600; color: var(--heading); }
+  .hero-trust .label { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+
+  /* ---------- Signature element: live triage card ---------- */
+  .triage-card {
+    padding: 26px;
+    position: relative;
+    overflow: hidden;
+  }
+  .triage-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-bottom: 18px;
+  }
+  .triage-photo {
+    height: 168px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, #DCEAE1, #C9DED2);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 18px;
+  }
+  .scan-line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--forest-bright), transparent);
+    top: 0;
+    animation: scan 3.6s ease-in-out infinite;
+    box-shadow: 0 0 16px 2px rgba(44,134,87,0.5);
+  }
+  @keyframes scan {
+    0% { top: 4%; opacity: 0; }
+    10% { opacity: 1; }
+    50% { top: 92%; opacity: 1; }
+    60% { opacity: 0; }
+    100% { top: 92%; opacity: 0; }
+  }
+  .triage-rows { display: flex; flex-direction: column; gap: 12px; }
+  .triage-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    opacity: 0;
+    transform: translateY(6px);
+    animation: rise 0.5s ease forwards;
+  }
+  .triage-row .k { color: var(--ink-soft); }
+  .triage-row .v { font-weight: 600; color: var(--heading); font-family: var(--font-mono); font-size: 13px; }
+  .triage-row:nth-child(1) { animation-delay: 0.6s; }
+  .triage-row:nth-child(2) { animation-delay: 1.5s; }
+  .triage-row:nth-child(3) { animation-delay: 2.4s; }
+  .triage-row:nth-child(4) { animation-delay: 3.3s; }
+  @keyframes rise { to { opacity: 1; transform: translateY(0); } }
+  .pulse-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--forest-bright);
+    display: inline-block; margin-right: 7px;
+    box-shadow: 0 0 0 0 rgba(44,134,87, 0.6);
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(44,134,87, 0.5); }
+    70% { box-shadow: 0 0 0 9px rgba(44,134,87, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(44,134,87, 0); }
+  }
+
+  .triage-illustration { width: 100%; height: 100%; display: block; }
+  .radar-ring { transform-origin: 200px 120px; animation: radarPulse 3s ease-out infinite; }
+  .radar-ring-2 { animation-delay: 1s; }
+  .radar-ring-3 { animation-delay: 2s; }
+  @keyframes radarPulse {
+    0% { r: 14; opacity: 0.7; }
+    100% { r: 60; opacity: 0; }
+  }
+  .stats-strip {
+    background: #0E3320;
+    padding: 40px 0;
+  }
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; text-align: center; }
+  .stats-row .num { font-family: var(--font-mono); font-size: 34px; font-weight: 600; color: #FFFFFF; }
+  .stats-row .label { font-size: 13px; color: rgba(255,255,255,0.65); margin-top: 6px; }
+
+  /* ---------- How it works ---------- */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+  .step { padding: 32px; position: relative; }
+  .step .idx {
+    font-family: var(--font-mono);
+    color: var(--forest-bright);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .step h3 { font-size: 21px; margin-top: 14px; }
+  .step p { color: var(--ink-soft); margin-top: 10px; font-size: 15px; }
+  .step-arrow {
+    position: absolute; right: -22px; top: 50%; transform: translateY(-50%);
+    color: var(--line); font-size: 22px;
+  }
+  @media (max-width: 900px) { .step-arrow { display: none; } }
+
+  /* ---------- Features ---------- */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+  .feature-card { padding: 28px; }
+  .feature-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: var(--mint-wash-2);
+    display: grid; place-items: center;
+    margin-bottom: 16px;
+  }
+  .feature-card h3 { font-size: 18px; margin-top: 0; }
+  .feature-card p { font-size: 14.5px; color: var(--ink-soft); margin-top: 8px; }
+
+  /* ---------- Roles ---------- */
+  .roles-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+  .role-card {
+    padding: 24px 18px;
+    text-align: left;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .role-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lifted); }
+  .role-card .tag {
+    font-family: var(--font-mono); font-size: 11px; color: var(--forest);
+    text-transform: uppercase; letter-spacing: 0.08em;
+  }
+  .role-card h4 { font-size: 17px; margin-top: 8px; color: var(--heading); font-family: var(--font-body); font-weight: 700;}
+  .role-card p { font-size: 13.5px; color: var(--ink-soft); margin-top: 8px; }
+
+  /* ---------- Testimonials ---------- */
+  .testimonial-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .testimonial { padding: 28px; }
+  .testimonial p { font-size: 15px; color: var(--ink); font-style: normal; }
+  .testimonial .who { margin-top: 18px; display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--forest-bright); color: white; display: grid; place-items: center; font-weight: 700; font-size: 13px; }
+  .who .name { font-weight: 600; font-size: 14px; }
+  .who .role { font-size: 12.5px; color: var(--ink-soft); }
+
+  /* ---------- CTA band ---------- */
+  .cta-band {
+    background: linear-gradient(135deg, var(--forest), var(--forest-deep));
+    border-radius: var(--radius-lg);
+    padding: 64px;
+    text-align: center;
+    color: white;
+  }
+  .cta-band h2 { color: white; font-size: 34px; }
+  .cta-band p { color: rgba(255,255,255,0.82); margin-top: 12px; }
+  .cta-band .hero-cta { justify-content: center; margin-top: 30px; }
+  .cta-band .btn-secondary { background: transparent; color: white; border-color: rgba(255,255,255,0.4); }
+
+  @media (max-width: 980px) {
+    .hero-grid { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 40px; }
+    .steps, .features-grid, .testimonial-grid { grid-template-columns: 1fr; }
+    .roles-grid { grid-template-columns: repeat(2, 1fr); }
+    .stats-row { grid-template-columns: repeat(2, 1fr); row-gap: 24px; }
+    .cta-band { padding: 40px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5.5V11C4 16.5 7.4 20.9 12 22C16.6 20.9 20 16.5 20 11V5.5L12 2Z" fill="white" fill-opacity="0.95"/><path d="M9 12L11 14L15.5 9.5" stroke="#0E3320" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      SHIELD AI
+    </a>
+    <div class="nav-links">
+      <a href="#how-it-works">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#roles">Who it's for</a>
+      <a href="/chatbot">Ask SHIELD</a>
+    </div>
+    <div class="nav-cta">
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">
+        <svg class="icon-sun" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8L6 18M18 6l1.8-1.8"/></svg>
+        <svg class="icon-moon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1 1 11.2 3 7.2 7.2 0 0 0 21 12.8z"/></svg>
+      </button>
+      <span class="nav-cta-links"><a class="btn-ghost" href="/login">Log in</a>
+      <a class="btn btn-primary" href="/report">Report an animal</a></span>
+      <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Menu"><span></span></button>
+    </div>
+  </div>
+  <div class="container mobile-menu">
+    <a href="#how-it-works" onclick="toggleMobileMenu()">How it works</a>
+    <a href="#features" onclick="toggleMobileMenu()">Features</a>
+    <a href="#roles" onclick="toggleMobileMenu()">Who it's for</a>
+    <a href="/chatbot">Ask SHIELD</a>
+    <div class="nav-cta">
+      <a class="btn btn-secondary" href="/login">Log in</a>
+      <a class="btn btn-primary" href="/report">Report an animal</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container hero-grid">
+    <div>
+      <span class="eyebrow">Live in Kolkata &amp; expanding</span>
+      <h1>Every injured animal deserves <em>a response in minutes</em>, not hours.</h1>
+      <p class="lede mt-24">
+        SHIELD AI turns a photo and a location pin into an instant severity assessment,
+        a matched volunteer, and a live rescue timeline — so help moves the moment it's needed.
+      </p>
+      <div class="hero-cta">
+        <a class="btn btn-primary btn-lg" href="/report">Report an injured animal</a>
+        <a class="btn btn-secondary btn-lg" href="/signup">Become a volunteer</a>
+      </div>
+      <div class="hero-trust">
+        <div><div class="num mono-stat" data-countup="4,286">0</div><div class="label">Animals rescued</div></div>
+        <div><div class="num mono-stat">11 min</div><div class="label">Avg. response time</div></div>
+        <div><div class="num mono-stat" data-countup="312">0</div><div class="label">Active volunteers</div></div>
+        <div><div class="num mono-stat" data-countup="48">0</div><div class="label">Partner NGOs</div></div>
+      </div>
+    </div>
+
+    <div class="glass triage-card">
+      <div class="triage-card-head">
+        <span><span class="pulse-dot"></span>LIVE ASSESSMENT</span>
+        <span>SHIELD-2026-0417</span>
+      </div>
+      <div class="triage-photo">
+        <svg class="triage-illustration" viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="radarGrad" cx="50%" cy="45%" r="65%">
+              <stop offset="0%" stop-color="#2C8657" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#2C8657" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="terrainGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#DCEAE1"/>
+              <stop offset="100%" stop-color="#C4DBCC"/>
+            </linearGradient>
+          </defs>
+          <rect width="400" height="220" fill="url(#terrainGrad)"/>
+          <circle class="radar-ring" cx="200" cy="120" r="20" fill="none" stroke="#2C8657" stroke-width="1.5" opacity="0.5"/>
+          <circle class="radar-ring radar-ring-2" cx="200" cy="120" r="20" fill="none" stroke="#2C8657" stroke-width="1.5" opacity="0.5"/>
+          <circle class="radar-ring radar-ring-3" cx="200" cy="120" r="20" fill="none" stroke="#2C8657" stroke-width="1.5" opacity="0.5"/>
+          <circle cx="200" cy="120" r="70" fill="url(#radarGrad)"/>
+          <!-- simple hills -->
+          <path d="M0 170 Q60 145 130 165 T260 160 T400 168 V220 H0 Z" fill="#CFE2D6" opacity="0.7"/>
+          <!-- location pin -->
+          <path d="M200 60c-16.6 0-30 13.4-30 30 0 22.5 30 55 30 55s30-32.5 30-55c0-16.6-13.4-30-30-30z" fill="#1B5E3A"/>
+          <circle cx="200" cy="90" r="13" fill="#EEF6F1"/>
+          <!-- dog silhouette inside pin -->
+          <path d="M194 84c0-2.2 1.8-4 4-4s4 1.8 4 4v1.5c1.6.4 3 1.9 3 3.7 0 2.2-1.8 4-4 4h-6c-2.2 0-4-1.8-4-4 0-1.8 1.4-3.3 3-3.7V84z" fill="#1B5E3A"/>
+        </svg>
+        <div class="scan-line"></div>
+      </div>
+      <div class="triage-rows">
+        <div class="triage-row"><span class="k">Animal detected</span><span class="v">Dog</span></div>
+        <div class="triage-row"><span class="k">Severity</span><span class="v" style="color:#A8441F">High</span></div>
+        <div class="triage-row"><span class="k">Priority score</span><span class="v">84 / 100</span></div>
+        <div class="triage-row"><span class="k">Volunteer matched</span><span class="v">Rahul S. · 0.7 km</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="stats-strip">
+  <div class="container stats-row">
+    <div><div class="num">24/7</div><div class="label">Emergency intake</div></div>
+    <div><div class="num" data-countup="98.2%">0%</div><div class="label">Cases triaged &lt; 60s</div></div>
+    <div><div class="num" data-countup="6">0</div><div class="label">Species categories</div></div>
+    <div><div class="num" data-countup="5">0</div><div class="label">Coordinated roles</div></div>
+  </div>
+</div>
+
+<section id="how-it-works">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">The pipeline</span>
+      <h2>From sighting to rescue, in three steps.</h2>
+    </div>
+    <div class="steps reveal-stagger">
+      <div class="step glass">
+        <span class="idx">01</span>
+        <h3>Report</h3>
+        <p>Snap a photo, drop a pin, add a quick description. No account required for emergencies.</p>
+        <span class="step-arrow">→</span>
+      </div>
+      <div class="step glass">
+        <span class="idx">02</span>
+        <h3>AI triage</h3>
+        <p>Gemini Vision reads the photo and description to estimate injury, severity, and first aid — in seconds.</p>
+        <span class="step-arrow">→</span>
+      </div>
+      <div class="step glass">
+        <span class="idx">03</span>
+        <h3>Rescue</h3>
+        <p>The nearest available volunteer is matched automatically and the case is tracked to recovery.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features" style="background: var(--mint-wash);">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">Platform</span>
+      <h2>Everything a rescue network needs, in one place.</h2>
+    </div>
+    <div class="features-grid reveal-stagger">
+      <div class="feature-card card">
+        <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B5E3A" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div>
+        <h3>Real-time tracking</h3>
+        <p>A live timeline from "Report submitted" through "Recovered" — visible to reporters and rescuers alike.</p>
+      </div>
+      <div class="feature-card card">
+        <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B5E3A" stroke-width="1.8"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z"/></svg></div>
+        <h3>Lost &amp; found matching</h3>
+        <p>Upload a photo of a found animal — SHIELD compares it against open lost reports nearby automatically.</p>
+      </div>
+      <div class="feature-card card">
+        <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B5E3A" stroke-width="1.8"><path d="M4 4h16v12H7l-3 3V4z"/></svg></div>
+        <h3>SHIELD assistant</h3>
+        <p>A rescue-trained chat assistant for first aid, emergency steps, and adoption or lost-pet guidance.</p>
+      </div>
+      <div class="feature-card card">
+        <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B5E3A" stroke-width="1.8"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div>
+        <h3>Auto-prioritization</h3>
+        <p>Every case gets a 0–100 priority score from severity, mobility, and risk factors — critical cases surface first.</p>
+      </div>
+      <div class="feature-card card">
+        <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B5E3A" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-6 8-6s8 2 8 6"/></svg></div>
+        <h3>Smart matching</h3>
+        <p>Volunteers are ranked by distance, vehicle access, species experience, and track record — best fit, first.</p>
+      </div>
+      <div class="feature-card card">
+        <div class="feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B5E3A" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><rect x="3" y="4" width="18" height="16" rx="2"/></svg></div>
+        <h3>Compatibility-checked adoption</h3>
+        <p>A short questionnaire scores how well a home fits an animal's temperament before applications go to NGOs.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="roles">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">Coordinated by design</span>
+      <h2>One platform, five roles working together.</h2>
+    </div>
+    <div class="roles-grid reveal-stagger">
+      <div class="role-card card"><span class="tag">Reports</span><h4>Citizen</h4><p>Report animals, track rescues, browse adoptions.</p></div>
+      <div class="role-card card"><span class="tag">Responds</span><h4>Volunteer</h4><p>Accept nearby cases, navigate, update status live.</p></div>
+      <div class="role-card card"><span class="tag">Coordinates</span><h4>NGO</h4><p>Manage incoming cases, treatment, and records.</p></div>
+      <div class="role-card card"><span class="tag">Treats</span><h4>Veterinarian</h4><p>Review assessments, log treatment, close cases.</p></div>
+      <div class="role-card card"><span class="tag">Oversees</span><h4>Admin</h4><p>Analytics, heatmaps, user and NGO verification.</p></div>
+    </div>
+  </div>
+</section>
+
+<section style="background: var(--mint-wash);">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">From the network</span>
+      <h2>Trusted by the people doing the work.</h2>
+    </div>
+    <div class="testimonial-grid reveal-stagger">
+      <div class="testimonial card">
+        <p>"The priority score means our team stops guessing which case to take first. Critical cases just surface."</p>
+        <div class="who"><div class="avatar">RS</div><div><div class="name">Rahul Sen</div><div class="role">Volunteer, Kolkata</div></div></div>
+      </div>
+      <div class="testimonial card">
+        <p>"We used to lose an hour matching cases to available hands. SHIELD does it before we've finished reading the report."</p>
+        <div class="who"><div class="avatar">PD</div><div><div class="name">Priya Das</div><div class="role">Coordinator, Paws &amp; Care NGO</div></div></div>
+      </div>
+      <div class="testimonial card">
+        <p>"The medical report PDF is the first thing that's ever made our treatment records look coherent to a shelter."</p>
+        <div class="who"><div class="avatar">AR</div><div><div class="name">Dr. Arjun Roy</div><div class="role">Veterinarian</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="cta-band reveal">
+      <span class="eyebrow" style="color:#BFE3CC;">Get involved</span>
+      <h2>Ready to be someone's fastest call?</h2>
+      <p>It takes about ninety seconds to set up a volunteer profile.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary btn-lg" style="background:white;color:var(--forest-deep);box-shadow:none;" href="/signup">Create an account</a>
+        <a class="btn btn-secondary btn-lg" href="/report">Report an animal instead</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="grid" style="grid-template-columns: 1.4fr repeat(3, 1fr); gap: 40px;">
+      <div>
+        <div class="brand" style="color:white;">
+          <span class="brand-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5.5V11C4 16.5 7.4 20.9 12 22C16.6 20.9 20 16.5 20 11V5.5L12 2Z" fill="white" fill-opacity="0.95"/><path d="M9 12L11 14L15.5 9.5" stroke="#0E3320" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          SHIELD AI
+        </div>
+        <p style="margin-top:14px; font-size: 14px; color: rgba(255,255,255,0.65); max-width: 34ch;">
+          Smart Help for Injured Everyday &amp; Living Diversity. Built to get help moving faster.
+        </p>
+      </div>
+      <div>
+        <h4>Platform</h4>
+        <div class="flex" style="flex-direction:column; gap:10px;">
+          <a href="/report">Report an animal</a>
+          <a href="/lost-found">Lost &amp; found</a>
+          <a href="/adoption">Adoption</a>
+          <a href="/chatbot">Ask SHIELD</a>
+        </div>
+      </div>
+      <div>
+        <h4>Roles</h4>
+        <div class="flex" style="flex-direction:column; gap:10px;">
+          <a href="/signup">Volunteer</a>
+          <a href="/signup">NGO partner</a>
+          <a href="/signup">Veterinarian</a>
+        </div>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <div class="flex" style="flex-direction:column; gap:10px;">
+          <a href="mailto:help@shield-ai.app">help@shield-ai.app</a>
+          <a href="tel:+911234567890">+91 12345 67890</a>
+          <a href="#">Kolkata, India</a>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:56px; padding-top:24px; border-top:1px solid rgba(255,255,255,0.12); font-size:13px; color:rgba(255,255,255,0.5); display:flex; justify-content:space-between;">
+      <span>© 2026 SHIELD AI. All rights reserved.</span>
+      <span>AI assessments are preliminary and do not replace veterinary care.</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

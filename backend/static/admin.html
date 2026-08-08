@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — SHIELD AI</title>
+<link rel="stylesheet" href="/static/css/theme.css">
+<link rel="stylesheet" href="/static/css/app.css">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+
+<div class="dash-shell" id="dash-shell"></div>
+
+<script src="/static/js/api.js"></script>
+<script src="/static/js/dashboard.js"></script>
+<script>
+(async () => {
+  const user = await renderDashboardShell({ active: 'overview', title: 'Analytics' });
+  if (!user) return;
+  const content = document.getElementById('dash-content');
+
+  content.innerHTML = `
+    <div class="stat-grid" id="stat-grid"></div>
+    <h2 class="section-title" id="users">Users</h2>
+    <div class="tab-row" id="role-tabs">
+      ${['citizen','volunteer','ngo','veterinarian','admin'].map((r,i) =>
+        `<button class="tab-btn ${i===0?'active':''}" data-role="${r}">${r[0].toUpperCase()+r.slice(1)}</button>`).join('')}
+    </div>
+    <div class="card mt-16" id="users-table"></div>
+  `;
+
+  try {
+    const summary = await SHIELD_API.analyticsSummary();
+    document.getElementById('stat-grid').innerHTML = `
+      <div class="stat-card card"><div class="label">Total reports</div><div class="value">${summary.total_reports}</div></div>
+      <div class="stat-card card"><div class="label">Critical reports</div><div class="value">${summary.critical_reports}</div></div>
+      <div class="stat-card card"><div class="label">Active rescues</div><div class="value">${summary.active_rescues}</div></div>
+      <div class="stat-card card"><div class="label">Completed</div><div class="value">${summary.completed_rescues}</div></div>
+      <div class="stat-card card"><div class="label">Volunteers</div><div class="value">${summary.total_volunteers}</div></div>
+      <div class="stat-card card"><div class="label">NGOs</div><div class="value">${summary.total_ngos}</div></div>
+      <div class="stat-card card"><div class="label">Avg. response</div><div class="value">${summary.average_response_minutes ?? '—'}${summary.average_response_minutes ? ' min' : ''}</div></div>
+    `;
+  } catch (err) {
+    document.getElementById('stat-grid').innerHTML = `<p style="color:var(--ink-soft);">${err.message}</p>`;
+  }
+
+  const tabs = document.getElementById('role-tabs');
+  tabs.addEventListener('click', (e) => {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    tabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadUsers(btn.dataset.role);
+  });
+
+  async function loadUsers(role) {
+    const el = document.getElementById('users-table');
+    el.innerHTML = `<p style="padding:24px; color:var(--ink-soft);">Loading…</p>`;
+    try {
+      const users = await SHIELD_API.adminUsers(role);
+      if (!users.length) { el.innerHTML = `<div class="empty-state">No ${role}s yet.</div>`; return; }
+      el.innerHTML = `
+        <table class="data-table">
+          <thead><tr><th>Name</th><th>Email</th><th>City</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            ${users.map(u => `
+              <tr>
+                <td>${u.full_name}</td>
+                <td>${u.email}</td>
+                <td>${u.city || '—'}</td>
+                <td>${u.is_active ? '<span class="badge badge-low">Active</span>' : '<span class="badge badge-critical">Deactivated</span>'}</td>
+                <td style="text-align:right;">
+                  <button class="btn btn-secondary" style="padding:7px 14px;font-size:12.5px;" onclick="toggleUser('${u.id}', ${u.is_active})">
+                    ${u.is_active ? 'Deactivate' : 'Reactivate'}
+                  </button>
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      `;
+    } catch (err) {
+      el.innerHTML = `<div class="empty-state">${err.message}</div>`;
+    }
+  }
+
+  window.toggleUser = async (id, isActive) => {
+    try {
+      if (isActive) await SHIELD_API.deactivateUser(id); else await SHIELD_API.reactivateUser(id);
+      showToast('Updated.');
+      loadUsers(tabs.querySelector('.tab-btn.active').dataset.role);
+    } catch (err) { showToast(err.message); }
+  };
+
+  loadUsers('citizen');
+})();
+</script>
+
+</body>
+</html>

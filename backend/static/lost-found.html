@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lost & Found — SHIELD AI</title>
+<link rel="stylesheet" href="/static/css/theme.css">
+<link rel="stylesheet" href="/static/css/auth.css">
+<link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5.5V11C4 16.5 7.4 20.9 12 22C16.6 20.9 20 16.5 20 11V5.5L12 2Z" fill="white" fill-opacity="0.95"/><path d="M9 12L11 14L15.5 9.5" stroke="#0E3320" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      SHIELD AI
+    </a>
+    <div class="nav-cta"><a class="btn-ghost" href="/">← Home</a></div>
+  </div>
+</nav>
+
+<header class="page-hero">
+  <div class="container flex" style="justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:20px;">
+    <div>
+      <span class="eyebrow">Community matching</span>
+      <h1>Lost &amp; Found</h1>
+      <p class="lede">Post a lost or found animal — SHIELD compares photos automatically to suggest matches.</p>
+    </div>
+    <button class="btn btn-primary btn-lg" id="new-post-btn">+ Post a listing</button>
+  </div>
+  <div class="container tab-row" id="type-tabs">
+    <button class="tab-btn active" data-type="">All</button>
+    <button class="tab-btn" data-type="lost">Lost</button>
+    <button class="tab-btn" data-type="found">Found</button>
+  </div>
+</header>
+
+<div class="page-body">
+  <div class="container">
+    <div class="listing-grid" id="listing-grid"></div>
+  </div>
+</div>
+
+<!-- New post modal -->
+<div id="post-modal" style="display:none; position:fixed; inset:0; background:rgba(14,51,32,0.45); z-index:300; align-items:center; justify-content:center; padding:20px;">
+  <div class="card panel" style="max-width:520px; width:100%; max-height:88vh; overflow-y:auto;">
+    <div class="flex" style="justify-content:space-between; align-items:center;">
+      <h2 style="font-size:20px;">Post a listing</h2>
+      <button onclick="closeModal()" style="font-size:22px; color:var(--ink-soft);">&times;</button>
+    </div>
+    <form id="post-form" class="mt-24">
+      <div class="role-select" style="grid-template-columns:1fr 1fr;">
+        <div class="role-option selected" data-type="lost">I lost an animal</div>
+        <div class="role-option" data-type="found">I found an animal</div>
+      </div>
+      <input type="hidden" name="post_type" value="lost">
+
+      <label class="field mt-16">
+        <span>Photo</span>
+        <input type="file" name="image" accept="image/*" required style="border:1.5px solid var(--line); border-radius:8px; padding:10px;">
+      </label>
+      <div class="form-row-2 mt-16">
+        <label class="field">
+          <span>Animal type</span>
+          <input type="text" name="animal_type" required placeholder="Dog">
+        </label>
+        <label class="field">
+          <span>Breed</span>
+          <input type="text" name="breed" placeholder="Optional">
+        </label>
+      </div>
+      <label class="field mt-16">
+        <span>Color / markings</span>
+        <input type="text" name="color_markings" placeholder="e.g. Brown with white patch">
+      </label>
+      <label class="field mt-16">
+        <span>Description</span>
+        <textarea name="description" rows="3" required></textarea>
+      </label>
+      <label class="field mt-16">
+        <span>Last seen near</span>
+        <input type="text" name="last_seen_landmark" placeholder="Landmark">
+      </label>
+      <label class="field mt-16">
+        <span>Contact phone</span>
+        <input type="tel" name="contact_phone" required>
+      </label>
+      <div id="modal-error" class="form-error" hidden></div>
+      <button type="submit" class="btn btn-primary btn-block btn-lg mt-24">Post listing</button>
+    </form>
+  </div>
+</div>
+
+<script src="/static/js/api.js"></script>
+<script>
+  const grid = document.getElementById('listing-grid');
+  const tabs = document.getElementById('type-tabs');
+  let currentType = '';
+
+  tabs.addEventListener('click', (e) => {
+    const btn = e.target.closest('.tab-btn'); if (!btn) return;
+    tabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentType = btn.dataset.type;
+    load();
+  });
+
+  async function load() {
+    grid.innerHTML = `<p style="color:var(--ink-soft);">Loading…</p>`;
+    try {
+      const posts = await SHIELD_API.listLostFound(currentType);
+      if (!posts.length) { grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">No listings yet. Be the first to post.</div>`; return; }
+      grid.innerHTML = posts.map(p => `
+        <div class="listing-card card">
+          <div class="listing-photo"><img src="${p.image_url}" alt="${p.animal_type}"></div>
+          <div class="listing-body">
+            <span class="badge ${p.post_type === 'lost' ? 'badge-high' : 'badge-low'}">${p.post_type}</span>
+            <h3 class="mt-8">${p.animal_type}${p.breed ? ' · ' + p.breed : ''}</h3>
+            <p>${p.description}</p>
+            <div class="listing-meta"><span>${p.last_seen_landmark || 'Location shared'}</span><span>${p.status}</span></div>
+          </div>
+        </div>
+      `).join('');
+    } catch (err) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">${err.message}</div>`;
+    }
+  }
+
+  const modal = document.getElementById('post-modal');
+  document.getElementById('new-post-btn').addEventListener('click', () => {
+    if (!SHIELD_API.isLoggedIn()) { window.location.href = '/login'; return; }
+    modal.style.display = 'flex';
+  });
+  function closeModal() { modal.style.display = 'none'; }
+
+  const typeSelect = document.querySelector('#post-form .role-select');
+  typeSelect.addEventListener('click', (e) => {
+    const opt = e.target.closest('.role-option'); if (!opt) return;
+    typeSelect.querySelectorAll('.role-option').forEach(o => o.classList.remove('selected'));
+    opt.classList.add('selected');
+    document.querySelector('input[name=post_type]').value = opt.dataset.type;
+  });
+
+  const postForm = document.getElementById('post-form');
+  const modalError = document.getElementById('modal-error');
+  postForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    modalError.hidden = true;
+
+    if (!navigator.geolocation) { modalError.textContent = 'Location is required.'; modalError.hidden = false; return; }
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const formData = new FormData(postForm);
+      formData.set('latitude', pos.coords.latitude);
+      formData.set('longitude', pos.coords.longitude);
+      try {
+        await SHIELD_API.createLostFound(formData);
+        closeModal();
+        postForm.reset();
+        showModalToast();
+        load();
+      } catch (err) {
+        modalError.textContent = err.message;
+        modalError.hidden = false;
+      }
+    }, () => { modalError.textContent = 'Please allow location access to post a listing.'; modalError.hidden = false; });
+  });
+
+  function showModalToast() {
+    const toast = document.createElement('div');
+    toast.className = 'toast show';
+    toast.textContent = 'Listing posted!';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  load();
+</script>
+
+</body>
+</html>

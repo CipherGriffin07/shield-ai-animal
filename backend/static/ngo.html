@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NGO dashboard — SHIELD AI</title>
+<link rel="stylesheet" href="/static/css/theme.css">
+<link rel="stylesheet" href="/static/css/app.css">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+
+<div class="dash-shell" id="dash-shell"></div>
+
+<script src="/static/js/api.js"></script>
+<script src="/static/js/dashboard.js"></script>
+<script>
+(async () => {
+  const user = await renderDashboardShell({ active: 'overview', title: 'Incoming cases' });
+  if (!user) return;
+  const content = document.getElementById('dash-content');
+
+  content.innerHTML = `
+    <div class="stat-grid" id="stat-grid"></div>
+    <h2 class="section-title">Assigned to your organization</h2>
+    <div class="card" id="cases-table"></div>
+
+    <h2 class="section-title">All open cases (claim one)</h2>
+    <div class="card" id="open-table"></div>
+  `;
+
+  async function refresh() {
+    try {
+      const [mine, all] = await Promise.all([SHIELD_API.ngoIncomingCases(), SHIELD_API.listReports()]);
+      renderStats(mine);
+      renderTable('cases-table', mine, false);
+      const open = all.filter(r => !['Case Closed', 'Recovered'].includes(r.status));
+      renderTable('open-table', open, true);
+    } catch (err) {
+      document.getElementById('cases-table').innerHTML = `<p style="padding:24px;color:var(--ink-soft);">${err.message}</p>`;
+    }
+  }
+
+  function renderStats(cases) {
+    document.getElementById('stat-grid').innerHTML = `
+      <div class="stat-card card"><div class="label">Assigned cases</div><div class="value">${cases.length}</div></div>
+      <div class="stat-card card"><div class="label">Critical</div><div class="value">${cases.filter(c=>c.severity==='Critical').length}</div></div>
+      <div class="stat-card card"><div class="label">Under treatment</div><div class="value">${cases.filter(c=>c.status==='Under Treatment').length}</div></div>
+      <div class="stat-card card"><div class="label">Organization</div><div class="value" style="font-size:16px;">${user.full_name}</div></div>
+    `;
+  }
+
+  function renderTable(elId, cases, showClaim) {
+    const el = document.getElementById(elId);
+    if (!cases.length) { el.innerHTML = `<div class="empty-state">Nothing here right now.</div>`; return; }
+    el.innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>ID</th><th>Animal</th><th>Severity</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          ${cases.map(c => `
+            <tr>
+              <td class="mono-stat">${c.display_id}</td>
+              <td>${c.animal_type}</td>
+              <td><span class="badge ${severityBadgeClass(c.severity)}">${c.severity}</span></td>
+              <td>${c.status}</td>
+              <td style="text-align:right;">
+                ${showClaim
+                  ? `<button class="btn btn-secondary" style="padding:7px 14px;font-size:12.5px;" onclick="claimCase('${c.id}')">Claim</button>`
+                  : `<a class="btn btn-secondary" style="padding:7px 14px;font-size:12.5px;" href="/tracking?id=${c.display_id}">View</a>`}
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  window.claimCase = async (id) => {
+    try { await SHIELD_API.ngoClaimCase(id); showToast('Case claimed.'); refresh(); }
+    catch (err) { showToast(err.message); }
+  };
+
+  refresh();
+})();
+</script>
+
+</body>
+</html>

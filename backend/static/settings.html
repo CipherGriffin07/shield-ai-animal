@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Settings — SHIELD AI</title>
+<link rel="stylesheet" href="/static/css/theme.css">
+<link rel="stylesheet" href="/static/css/auth.css">
+<link rel="stylesheet" href="/static/css/app.css">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+
+<div class="dash-shell" id="dash-shell"></div>
+
+<script src="/static/js/api.js"></script>
+<script src="/static/js/dashboard.js"></script>
+<script>
+(async () => {
+  const user = await renderDashboardShell({ active: 'settings', title: 'Settings' });
+  if (!user) return;
+  const content = document.getElementById('dash-content');
+
+  content.innerHTML = `
+    <div class="card panel" style="max-width:560px;">
+      <h2 style="font-size:18px;">Profile</h2>
+      <form id="profile-form" class="mt-16">
+        <label class="field"><span>Full name</span><input type="text" name="full_name" value="${user.full_name}"></label>
+        <label class="field mt-16"><span>Phone</span><input type="tel" name="phone" value="${user.phone}"></label>
+        <label class="field mt-16"><span>City</span><input type="text" name="city" value="${user.city || ''}"></label>
+        <div id="profile-msg" class="form-success" hidden></div>
+        <button class="btn btn-primary mt-24">Save profile</button>
+      </form>
+    </div>
+
+    <div class="card panel mt-24" style="max-width:560px;">
+      <h2 style="font-size:18px;">Preferences</h2>
+      <form id="prefs-form" class="mt-16">
+        <div class="form-row-2">
+          <label class="field"><span>Theme</span>
+            <select name="theme_preference">
+              <option value="light" ${user.theme_preference==='light'?'selected':''}>Light</option>
+              <option value="dark" ${user.theme_preference==='dark'?'selected':''}>Dark</option>
+            </select>
+          </label>
+          <label class="field"><span>Language</span>
+            <select name="language_preference">
+              <option value="en" ${user.language_preference==='en'?'selected':''}>English</option>
+              <option value="hi" ${user.language_preference==='hi'?'selected':''}>Hindi</option>
+              <option value="bn" ${user.language_preference==='bn'?'selected':''}>Bengali</option>
+            </select>
+          </label>
+        </div>
+        <button class="btn btn-secondary mt-24">Save preferences</button>
+      </form>
+    </div>
+
+    <div class="card panel mt-24" style="max-width:560px;">
+      <h2 style="font-size:18px;">Change password</h2>
+      <form id="password-form" class="mt-16">
+        <label class="field"><span>Current password</span><input type="password" name="current_password" required></label>
+        <label class="field mt-16"><span>New password</span><input type="password" name="new_password" required></label>
+        <div id="password-msg" class="form-success" hidden></div>
+        <div id="password-error" class="form-error" hidden></div>
+        <button class="btn btn-secondary mt-24">Update password</button>
+      </form>
+    </div>
+  `;
+
+  document.getElementById('profile-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('profile-msg');
+    try {
+      await SHIELD_API.updateProfile(Object.fromEntries(new FormData(e.target)));
+      msg.textContent = 'Profile updated.'; msg.hidden = false;
+    } catch (err) { showToast(err.message); }
+  });
+
+  document.getElementById('prefs-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+      await SHIELD_API.updatePreferences(Object.fromEntries(new FormData(e.target)));
+      showToast('Preferences saved.');
+    } catch (err) { showToast(err.message); }
+  });
+
+  document.getElementById('password-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const msg = document.getElementById('password-msg');
+    const errorBox = document.getElementById('password-error');
+    msg.hidden = true; errorBox.hidden = true;
+    try {
+      await SHIELD_API.changePassword(Object.fromEntries(new FormData(e.target)));
+      msg.textContent = 'Password updated.'; msg.hidden = false;
+      e.target.reset();
+    } catch (err) { errorBox.textContent = err.message; errorBox.hidden = false; }
+  });
+})();
+</script>
+
+</body>
+</html>

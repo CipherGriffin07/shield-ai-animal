@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in — SHIELD AI</title>
+<link rel="stylesheet" href="/static/css/theme.css">
+<link rel="stylesheet" href="/static/css/auth.css">
+</head>
+<body class="auth-body">
+
+<div class="auth-shell">
+  <div class="auth-visual glass-dark">
+    <a class="brand" href="/" style="color:white;">
+      <span class="brand-mark"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L4 5.5V11C4 16.5 7.4 20.9 12 22C16.6 20.9 20 16.5 20 11V5.5L12 2Z" fill="white" fill-opacity="0.95"/><path d="M9 12L11 14L15.5 9.5" stroke="#0E3320" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      SHIELD AI
+    </a>
+    <div class="auth-visual-body">
+      <h2 style="color:white; font-size: 30px;">Welcome back to the rescue network.</h2>
+      <p style="color:rgba(255,255,255,0.75); margin-top:14px; font-size:15px;">
+        Sign in to track your reports, manage your cases, or coordinate as an NGO.
+      </p>
+      <div class="auth-quote">
+        <p>"Every case gets a priority score before a human even sees it."</p>
+        <span>— How SHIELD AI triages emergencies</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-form-side">
+    <div class="auth-form-inner">
+      <a class="btn-ghost" href="/" style="font-size:13.5px;">← Back to home</a>
+      <h1 style="font-size: 30px; margin-top: 22px;">Log in</h1>
+      <p class="lede" style="font-size:15px; margin-top:8px;">New to SHIELD? <a href="/signup" style="color:var(--forest); font-weight:600;">Create an account</a></p>
+
+      <form id="login-form" class="mt-32">
+        <label class="field">
+          <span>Email</span>
+          <input type="email" name="email" required placeholder="you@example.com" autocomplete="email">
+        </label>
+        <label class="field mt-16">
+          <span>Password</span>
+          <input type="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+        </label>
+        <div class="flex" style="justify-content: flex-end; margin-top: 10px;">
+          <a href="/forgot-password" style="font-size: 13.5px; color: var(--ink-soft);">Forgot password?</a>
+        </div>
+        <div id="form-error" class="form-error" hidden></div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg mt-24">Log in</button>
+      </form>
+
+      <div class="auth-demo">
+        <span class="eyebrow">Demo access</span>
+        <p>Admin: <code>admin@shield-ai.app</code> / <code>Admin@1234</code></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/api.js"></script>
+<script>
+  const form = document.getElementById('login-form');
+  const errorBox = document.getElementById('form-error');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorBox.hidden = true;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Logging in…';
+
+    const data = Object.fromEntries(new FormData(form));
+    try {
+      const tokens = await SHIELD_API.login(data);
+      SHIELD_API.setTokens(tokens);
+      const roleRoutes = {
+        citizen: '/dashboard', volunteer: '/volunteer', ngo: '/ngo',
+        veterinarian: '/ngo', admin: '/admin',
+      };
+      window.location.href = roleRoutes[tokens.role] || '/dashboard';
+    } catch (err) {
+      errorBox.textContent = err.message;
+      errorBox.hidden = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Log in';
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Volunteer dashboard — SHIELD AI</title>
+<link rel="stylesheet" href="/static/css/theme.css">
+<link rel="stylesheet" href="/static/css/app.css">
+<link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body>
+
+<div class="dash-shell" id="dash-shell"></div>
+
+<script src="/static/js/api.js"></script>
+<script src="/static/js/dashboard.js"></script>
+<script>
+(async () => {
+  const user = await renderDashboardShell({ active: 'overview', title: 'Nearby cases' });
+  if (!user) return;
+  const content = document.getElementById('dash-content');
+
+  content.innerHTML = `
+    <div class="card panel flex" style="justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+      <div>
+        <strong style="font-size:15px;">Availability</strong>
+        <p style="font-size:13px; color:var(--ink-soft); margin-top:4px;" id="loc-status">Share your location to see nearby cases.</p>
+      </div>
+      <div class="flex" style="gap:10px;">
+        <button class="btn btn-secondary" id="locate-btn">Update my location</button>
+        <label class="flex" style="align-items:center; gap:8px; font-size:13.5px; font-weight:600;">
+          <input type="checkbox" id="available-toggle" checked style="width:16px; height:16px;"> Available for cases
+        </label>
+      </div>
+    </div>
+
+    <h2 class="section-title">Cases near you</h2>
+    <div id="cases-list" class="listing-grid" style="grid-template-columns:1fr;"></div>
+  `;
+
+  const casesList = document.getElementById('cases-list');
+  const locStatus = document.getElementById('loc-status');
+  const locateBtn = document.getElementById('locate-btn');
+  const availableToggle = document.getElementById('available-toggle');
+
+  try {
+    const profile = await SHIELD_API.myVolunteerProfile();
+    availableToggle.checked = profile.is_available;
+    if (profile.latitude) { locStatus.textContent = 'Location on file. Loading nearby cases…'; loadCases(); }
+  } catch { /* profile may not exist for this role edge case */ }
+
+  availableToggle.addEventListener('change', async () => {
+    try {
+      const profile = await SHIELD_API.myVolunteerProfile();
+      await SHIELD_API.updateVolunteerProfile({
+        animal_experience: profile.animal_experience, has_vehicle: profile.has_vehicle,
+        years_experience: profile.years_experience, is_available: availableToggle.checked,
+      });
+      showToast(availableToggle.checked ? "You're marked available." : "You're marked unavailable.");
+    } catch (err) { showToast(err.message); }
+  });
+
+  locateBtn.addEventListener('click', () => {
+    if (!navigator.geolocation) { locStatus.textContent = 'Geolocation not supported.'; return; }
+    locStatus.textContent = 'Locating…';
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      try {
+        await SHIELD_API.updateVolunteerLocation(pos.coords.latitude, pos.coords.longitude);
+        locStatus.textContent = 'Location updated. Loading nearby cases…';
+        loadCases();
+      } catch (err) { locStatus.textContent = err.message; }
+    }, () => { locStatus.textContent = 'Location permission denied.'; });
+  });
+
+  async function loadCases() {
+    casesList.innerHTML = `<p style="color:var(--ink-soft);">Loading…</p>`;
+    try {
+      const cases = await SHIELD_API.nearbyCases();
+      if (!cases.length) {
+        casesList.innerHTML = `<div class="empty-state card">No open cases within 15km right now.</div>`;
+        return;
+      }
+      casesList.innerHTML = cases.map(c => `
+        <div class="case-card card">
+          <div class="case-card-head">
+            <div>
+              <span class="id">${c.display_id}</span>
+              <h4>${c.animal_type} · ${c.analysis.injury}</h4>
+            </div>
+            <span class="badge ${severityBadgeClass(c.severity)}">${c.severity}</span>
+          </div>
+          <div class="case-meta">
+            <span>Priority ${c.priority_score}/100</span>
+            <span>${c.landmark || 'Location shared'}</span>
+            <span>${timeAgo(c.created_at)}</span>
+          </div>
+          <div class="case-actions">
+            <button class="btn btn-primary" onclick="acceptCase('${c.id}')">Accept case</button>
+            <a class="btn btn-secondary" href="/tracking?id=${c.display_id}">View details</a>
+          </div>
+        </div>
+      `).join('');
+    } catch (err) {
+      casesList.innerHTML = `<div class="empty-state card">${err.message}</div>`;
+    }
+  }
+
+  window.acceptCase = async (id) => {
+    try {
+      await SHIELD_API.acceptCase(id);
+      showToast('Case accepted — head over when ready.');
+      loadCases();
+    } catch (err) { showToast(err.message); }
+  };
+})();
+</script>
+
+</body>
+</html>

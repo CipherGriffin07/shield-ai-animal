@@ -2,6 +2,9 @@
 
 **S**mart **H**elp for **I**njured **E**veryday & **L**iving **D**iversity
 
+##Demo video, working prototype and PPT :
+https://drive.google.com/drive/folders/1GEahA8kEQyuyjzK7OFE-K9y1ntEEVB4i?usp=drive_link
+
 This is the production backend for SHIELD AI, built in phases on top of the original
 hackathon MVP. This phase covers: full database schema, JWT authentication with
 5 roles, rescue report intake with AI triage, volunteer/NGO matching, tracking,
